@@ -4,6 +4,11 @@ import (
 	"flag"
 	"os"
 	"time"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/template/html"
+	"github.com/gofiber/websocket/v2"
 )
 
 var (
@@ -18,6 +23,7 @@ func Run() error {
 	if *addr == ":"{
 		*addr = ":8080 "
 	}
+	app := fiber.App()
 
 	app.Get("/", handlers.Welcome)
 	app.Get("/room/create", handlers.RoomCreate)
