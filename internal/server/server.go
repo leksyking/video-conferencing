@@ -30,12 +30,12 @@ func Run() error {
 	app.Use(logger.New())
 	app.Use(cors.New())
 
-	app.Get("/", handlers.Welcome)
-	app.Get("/room/create", handlers.RoomCreate)
-	app.Get("/room/:uuid", handlers.Room)
+	app.Get("/", handlers.Welcome)               //welcome users
+	app.Get("/room/create", handlers.RoomCreate) // create a room
+	app.Get("/room/:uuid", handlers.Room)        // get a particular room
 	app.Get("/room/:uuid/websocket", websocket.New(handlers.RoomWebsocket, websocket.Config{
 		HandshakeTimeout: 10 * time.Second,
-	}))
+	})) // add websocket to a particular room
 	app.Get("/room/:uuid/chat", handlers.RoomChat)
 	app.Get("/room/:uuid/chat/websocket", websocket.New(handlers.RoomChatWebsocket))
 	app.Get("/room/:uuid/viewer/websocket", websocket.New(handlers.RoomViewerWebsocket))
