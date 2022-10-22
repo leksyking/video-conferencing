@@ -1,6 +1,8 @@
 package chat
 
 import (
+	"bytes"
+	"log"
 	"time"
 
 	"github.com/fasthttp/websocket"
@@ -30,7 +32,27 @@ var upgrader = websocket.FastHTTPUpgrader{
 }
 
 func (c *Client) readPump() {
-
+	defer func() {
+		c.Hub.unregister <- c
+		c.Conn.Close()
+	}()
+	c.Conn.SetReadLimit(maxMessageSize)
+	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetPongHandler(func(string) error {
+		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
+	for {
+		_, message, err := c.Conn.ReadMessage()
+		if err != nil {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+				log.Printf("error: %v", err)
+			}
+			break
+		}
+		message = bytes.TrimSpace(bytes.Replace(message, newline, space, -1))
+		c.Hub.broadcast <- message
+	}
 }
 func (c *Client) writePump() {
 
