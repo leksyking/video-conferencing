@@ -5,7 +5,7 @@ import (
 	"video-conferencing/pkg/chat"
 )
 
-type Rooms struct {
+type Room struct {
 	Peers *Peers
 	Hub   *chat.Hub
 }
