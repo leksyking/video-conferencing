@@ -9,10 +9,10 @@ import (
 )
 
 const (
-	writeWait      = 10 * time.Second
-	pongWait       = 60 * time.Second
-	pingPeriod     = (pongWait * 9) / 10
-	maxMessageSize = 512
+	writeWait            = 10 * time.Second
+	pongWait             = 60 * time.Second
+	pingPeriod           = (pongWait * 9) / 10
+	maxMessageSize int64 = 512
 )
 
 var (
@@ -54,8 +54,40 @@ func (c *Client) readPump() {
 		c.Hub.broadcast <- message
 	}
 }
-func (c *Client) writePump() {
 
+func (c *Client) writePump() {
+	ticker := time.NewTicker(pongWait)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case message, ok := <-c.Send:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				return
+			}
+			w, err := c.Conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+			n := len(c.Send)
+			for i := 0; i < n; i++ {
+				w.Write(newline)
+				w.Write(<-c.Send)
+			}
+			if err := w.Close(); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
+		}
+	}
 }
 
 func PeerChatConn(c *websocket.Conn, hub *Hub) {
