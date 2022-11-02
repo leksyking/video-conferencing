@@ -3,6 +3,8 @@ package handlers
 import (
 	"video-conferencing/pkg/chat"
 
+	w "video-conferencing/pkg/webrtc"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 )
@@ -29,5 +31,20 @@ func RoomChatWebsocket(c *websocket.Conn) {
 }
 
 func StreamChatWebsocket(c *websocket.Conn) {
-
+	suuid := c.Params("suuid")
+	if suuid == "" {
+		return
+	}
+	w.RoomsLock.Lock()
+	if stream, ok := w.Streams[suuid]; ok {
+		w.RoomsLock.Unlock()
+		if stream == nil {
+			hub := chat.NewHub()
+			stream.Hub = hub
+			go hub.Run()
+		}
+		chat.PeerChatConn(c.Conn, stream.Hub)
+		return
+	}
+	w.RoomsLock.Unlock()
 }
