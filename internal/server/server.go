@@ -25,7 +25,7 @@ func Run() error {
 	flag.Parse()
 
 	if *addr == ":" {
-		*addr = ":8080 "
+		*addr = ":8080"
 	}
 
 	engine := html.New("../views", ".html")

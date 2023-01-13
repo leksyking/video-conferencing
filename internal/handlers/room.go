@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"os"
 
 	w "video-conferencing/pkg/webrtc"
 
@@ -30,8 +31,17 @@ func Room(c *fiber.Ctx) error {
 		c.Status(400)
 		return nil
 	}
+	ws := "ws"
+	if os.Getenv("ENVIRONMENT") == "PRODUCTION" {
+		ws = "wss"
+	}
 
 	uuid, suuid, _ := createOrGetRoom(uuid)
+	return c.Render("peer", fiber.Map{
+		"RommWebsocketAddress":
+		"RoomLink":
+		
+	})
 }
 
 func createOrGetRoom(uuid string) (string, string, *w.Room) {
