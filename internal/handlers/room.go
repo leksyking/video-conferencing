@@ -23,6 +23,7 @@ func RoomWebsocket(c *websocket.Conn) error {
 	_, _, room := createOrGetRoom(uuid)
 	w.RoomConn(c, room.Peers)
 	//room connection
+	return nil
 }
 
 func Room(c *fiber.Ctx) error {
@@ -38,10 +39,13 @@ func Room(c *fiber.Ctx) error {
 
 	uuid, suuid, _ := createOrGetRoom(uuid)
 	return c.Render("peer", fiber.Map{
-		"RommWebsocketAddress":
-		"RoomLink":
-		
-	})
+		"RommWebsocketAddress": fmt.Sprintf("%s://%s/room%s/websocket", ws, c.Hostname(), uuid),
+		"RoomLink":             fmt.Sprintf("%s://%s/room/%s", c.Protocol(), c.Hostname(), uuid),
+		"ChatWebSocketAddr":    fmt.Sprintf("%s://%s/room/%s/chat/websocket", ws, c.Hostname(), uuid),
+		"ViewerWebSocketAddr":  fmt.Sprintf("%s://%s/room/%s/viewer/websocket", ws, c.Hostname(), uuid),
+		"StreamLink":           fmt.Sprintf("%s://%s/stream/%s", c.Protocol(), c.Hostname(), suuid),
+		"Type":                 "room",
+	}, "layouts/main")
 }
 
 func createOrGetRoom(uuid string) (string, string, *w.Room) {
@@ -49,7 +53,17 @@ func createOrGetRoom(uuid string) (string, string, *w.Room) {
 }
 
 func RoomViewerWebsocket(c *websocket.Conn) {
-
+	uuid := c.Params("uuid")
+	if uuid == "" {
+		return
+	}
+	w.RoomsLock.Lock()
+	if peer, ok := w.Rooms[uuid]; ok {
+		w.RoomsLock.Unlock()
+		roomViewerConn(c, peer.Peers)
+		return
+	}
+	w.RoomsLock.Unlock()
 }
 func roomViewerConn(c *websocket.Conn, p *w.Peers) {
 

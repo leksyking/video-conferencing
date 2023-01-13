@@ -1,3 +1,3 @@
 A video calling, streaming and chatting project
 
-main.go - server.go - handlers - pkg
+main.go -internal/server/server.go - internal/handlers - pkg
