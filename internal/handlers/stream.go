@@ -37,11 +37,31 @@ func Stream(c *fiber.Ctx) error {
 }
 
 func StreamWebSocket(c *websocket.Conn) {
-
+	suuid := c.Params("suuid")
+	if suuid == "" {
+		return
+	}
+	w.RoomsLock.Lock()
+	if streams, ok := w.Streams[suuid]; ok {
+		w.RoomsLock.Unlock()
+		w.StreamConn(c, streams.Peers)
+		return
+	}
+	w.RoomsLock.Unlock()
 }
 
 func StreamViewerWebSocket(c *websocket.Conn) {
-
+	suuid := c.Params("suuid")
+	if suuid == "" {
+		return
+	}
+	w.RoomsLock.Lock()
+	if streams, ok := w.Streams[suuid]; ok {
+		w.RoomsLock.Unlock()
+		ViewerConn(c, streams.Peers)
+		return
+	}
+	w.RoomsLock.Unlock()
 }
 
 func ViewerConn(c *websocket.Conn, p *w.Peers) {
